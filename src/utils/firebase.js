@@ -1,12 +1,23 @@
+import { initializeApp } from "firebase/app";
 import {
+  browserLocalPersistence,
+  getAuth,
+  inMemoryPersistence,
+  setPersistence,
+} from "firebase/auth";
+import {
+  getFirestore,
   initializeFirestore,
   memoryLocalCache,
   persistentLocalCache,
   persistentMultipleTabManager,
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+} from "firebase/firestore";
 
-const firebaseConfig = {
+const runtimeConfig = globalThis.__firebase_config
+  ? JSON.parse(globalThis.__firebase_config)
+  : null;
+
+const envConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -17,16 +28,19 @@ const firebaseConfig = {
 
 function hasFirebaseConfig(config) {
   return Boolean(
-    config.apiKey &&
-    config.authDomain &&
-    config.projectId &&
-    config.storageBucket &&
-    config.messagingSenderId &&
-    config.appId,
+    config?.apiKey &&
+      config?.authDomain &&
+      config?.projectId &&
+      config?.storageBucket &&
+      config?.messagingSenderId &&
+      config?.appId,
   );
 }
 
-const isFirebaseReady = hasFirebaseConfig(firebaseConfig);
+export const isCanvasEnvironment = Boolean(runtimeConfig);
+export const firebaseConfig = runtimeConfig ?? envConfig;
+export const isFirebaseReady = hasFirebaseConfig(firebaseConfig);
+export const appId = globalThis.__app_id ?? firebaseConfig.projectId ?? "trip-packer";
 
 const app = isFirebaseReady ? initializeApp(firebaseConfig) : null;
 
@@ -46,4 +60,24 @@ if (app) {
   }
 }
 
-export { db, isFirebaseReady };
+if (app && !db) {
+  db = getFirestore(app);
+}
+
+const auth = app ? getAuth(app) : null;
+
+async function configureAuthPersistence() {
+  if (!auth) {
+    return;
+  }
+
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch {
+    await setPersistence(auth, inMemoryPersistence);
+  }
+}
+
+const firebaseReadyPromise = configureAuthPersistence();
+
+export { app, auth, db, firebaseReadyPromise };
