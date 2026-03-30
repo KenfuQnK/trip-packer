@@ -4,15 +4,15 @@ export default function SyncStatus({ syncErrorMsg, syncState }) {
   const dbPath = "/(root collections)/";
 
   return (
-    <div className="absolute top-4 right-4 z-50">
+    <div className="pointer-events-none fixed right-4 bottom-4 z-50 lg:right-6 lg:bottom-6">
       {syncState === "syncing" && (
-        <div className="flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-sm">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-xl shadow-amber-200/50">
           <Loader2 size={14} className="animate-spin" /> Guardando...
         </div>
       )}
       {syncState === "synced" && (
         <div
-          className="cursor-help rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-sm opacity-70 transition-opacity hover:opacity-100"
+          className="pointer-events-auto cursor-help rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-xl shadow-emerald-200/50 opacity-90 transition-opacity hover:opacity-100"
           title={`Ruta DB: ${dbPath}`}
         >
           <div className="flex items-center gap-2">
@@ -22,7 +22,7 @@ export default function SyncStatus({ syncErrorMsg, syncState }) {
       )}
       {syncState === "error" && (
         <div
-          className="cursor-help rounded-full bg-red-100 px-3 py-1.5 text-xs font-bold text-red-800 shadow-sm"
+          className="pointer-events-auto cursor-help rounded-full bg-red-100 px-3 py-1.5 text-xs font-bold text-red-800 shadow-xl shadow-red-200/50"
           title={syncErrorMsg}
         >
           <div className="flex items-center gap-2">

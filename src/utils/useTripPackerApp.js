@@ -11,11 +11,12 @@ import {
 
 import { db, isFirebaseReady } from "./firebase";
 import {
+  CATEGORY_COLOR_OPTIONS,
   DEFAULT_CATEGORIES,
   DEFAULT_ITEMS,
   generateId,
   getRandomColor,
-} from "./tripPackerData";
+} from "./constants";
 
 const initialModalState = {
   isOpen: false,
@@ -25,6 +26,8 @@ const initialModalState = {
   onConfirm: null,
   isDelete: false,
   deleteText: "",
+  color: "",
+  colorOptions: [],
 };
 
 function buildFirebaseError(message, code = "firebase/not-configured") {
@@ -155,6 +158,8 @@ export function useTripPackerApp() {
       onConfirm,
       isDelete: false,
       deleteText: "",
+      color: "",
+      colorOptions: [],
     });
   };
 
@@ -167,6 +172,22 @@ export function useTripPackerApp() {
       onConfirm,
       isDelete: true,
       deleteText,
+      color: "",
+      colorOptions: [],
+    });
+  };
+
+  const openCategoryModal = (title, initialValue, initialColor, onConfirm) => {
+    setModal({
+      isOpen: true,
+      title,
+      placeholder: "Nombre",
+      value: initialValue,
+      onConfirm,
+      isDelete: false,
+      deleteText: "",
+      color: initialColor,
+      colorOptions: CATEGORY_COLOR_OPTIONS,
     });
   };
 
@@ -190,18 +211,23 @@ export function useTripPackerApp() {
 
   const actions = {
     addCategory: () => {
-      openInputModal("Nueva categoria", "Ej: Playa", "", (name) => {
+      openCategoryModal("Nueva categoria", "", getRandomColor(), (name, color) => {
         runWithSync(() =>
           setDoc(getDocumentRef("categories", generateId()), {
             name,
-            color: getRandomColor(),
+            color,
           }),
         );
       });
     },
     editCategory: (category) => {
-      openInputModal("Editar categoria", "Nombre", category.name, (name) => {
-        runWithSync(() => updateDoc(getDocumentRef("categories", category.id), { name }));
+      openCategoryModal("Editar categoria", category.name, category.color, (name, color) => {
+        runWithSync(() =>
+          updateDoc(getDocumentRef("categories", category.id), {
+            name,
+            color,
+          }),
+        );
       });
     },
     deleteCategory: (category) => {
@@ -254,6 +280,25 @@ export function useTripPackerApp() {
             categoryId,
             name,
             order: nextOrder,
+            type: "item",
+          });
+        });
+      });
+    },
+    addSeparator: (categoryId) => {
+      openInputModal("Nuevo separador", "Ej: Documentos importantes", "", (name) => {
+        runWithSync(async () => {
+          const categoryItems = items.filter((item) => item.categoryId === categoryId);
+          const nextOrder =
+            categoryItems.length > 0
+              ? Math.max(...categoryItems.map((item) => item.order || 0)) + 1
+              : 1;
+
+          await setDoc(getDocumentRef("items", generateId()), {
+            categoryId,
+            name,
+            order: nextOrder,
+            type: "separator",
           });
         });
       });

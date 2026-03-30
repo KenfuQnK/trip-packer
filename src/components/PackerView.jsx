@@ -27,10 +27,10 @@ export default function PackerView({
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="sticky top-0 z-20 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
+        <div className="flex w-full items-center justify-between">
           <button
             onClick={() => setView("home")}
-            className="-ml-2 rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
+            className="-ml-2 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
           >
             <ChevronLeft size={24} />
           </button>
@@ -38,13 +38,13 @@ export default function PackerView({
           <div className="flex gap-1">
             <button
               onClick={() => setView("trip-edit")}
-              className="rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-indigo-600"
+              className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-indigo-600"
             >
               <Edit2 size={18} />
             </button>
             <button
               onClick={() => actions.deleteTrip(trip.id)}
-              className="rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-red-500"
+              className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-red-500"
             >
               <Trash2 size={18} />
             </button>
@@ -52,7 +52,7 @@ export default function PackerView({
         </div>
       </div>
       <div className="sticky top-[73px] z-10 border-b border-slate-100 bg-white px-6 pt-3 pb-4 shadow-sm">
-        <div className="mx-auto w-full max-w-7xl">
+        <div className="w-full">
           <div className="mb-2 flex justify-between text-sm font-bold text-slate-500">
             <span>
               {trip.packedItems.length} de {trip.selectedItems.length} en la maleta
@@ -73,7 +73,7 @@ export default function PackerView({
             <p className="text-lg font-medium">No has seleccionado ningun item.</p>
             <button
               onClick={() => setView("trip-edit")}
-              className="mt-4 font-bold text-indigo-600 hover:underline"
+              className="cursor-pointer mt-4 font-bold text-indigo-600 hover:underline"
             >
               Anadir items al viaje
             </button>
@@ -81,9 +81,11 @@ export default function PackerView({
         )}
         <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
           {categories.map((category) => {
-            const categoryItems = items.filter(
-              (item) => trip.selectedItems.includes(item.id) && item.categoryId === category.id,
-            );
+            const categoryItems = items
+              .filter((item) => item.categoryId === category.id)
+              .sort((first, second) => (first.order || 0) - (second.order || 0));
+
+            const selectedItemIds = new Set(trip.selectedItems);
 
             if (categoryItems.length === 0) {
               return null;
@@ -92,10 +94,10 @@ export default function PackerView({
             return (
               <div
                 key={category.id}
-                className="animate-in slide-in-from-bottom-2 fade-in mb-6 break-inside-avoid duration-300"
+                className={`animate-in slide-in-from-bottom-2 fade-in mb-6 break-inside-avoid duration-300 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm ${category.color}`}
               >
                 <div
-                  className={`mb-3 inline-flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80 ${category.color}`}
+                  className={`w-full mb-3 inline-flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80 ${category.color} bg-red-500`}
                   onClick={() => toggleCategory(category.id)}
                 >
                   {category.name}{" "}
@@ -103,17 +105,46 @@ export default function PackerView({
                 </div>
                 {!collapsed[category.id] && (
                   <div className="space-y-2">
-                    {categoryItems.map((item) => {
+                    {categoryItems.map((item, index) => {
+                      const isSeparator = item.type === "separator";
+                      const displayLabel = item.name || "Separador";
+
+                      if (isSeparator) {
+                        const hasSelectedAfter = categoryItems
+                          .slice(index + 1)
+                          .some(
+                            (entry) =>
+                              entry.type !== "separator" && selectedItemIds.has(entry.id),
+                          );
+
+                        if (!hasSelectedAfter) {
+                          return null;
+                        }
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                          >
+                            {displayLabel}:
+                          </div>
+                        );
+                      }
+
+                      if (!selectedItemIds.has(item.id)) {
+                        return null;
+                      }
+
                       const isPacked = trip.packedItems.includes(item.id);
 
                       return (
                         <div
                           key={item.id}
                           onClick={() => actions.togglePacked(trip.id, item.id, trip.packedItems)}
-                          className={`flex cursor-pointer items-center gap-4 rounded-2xl p-4 transition-all duration-300 ${
+                          className={`flex cursor-pointer items-center gap-2 rounded-xl p-2 transition-all duration-300 ${
                             isPacked
                               ? "scale-[0.98] bg-slate-50 opacity-60"
-                              : "border border-slate-100 bg-white shadow-sm hover:border-indigo-200"
+                              : "border border-slate-100 bg-white shadow-sm hover:border-indigo-200 hover:bg-slate-100"
                           }`}
                         >
                           <div

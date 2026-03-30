@@ -4,10 +4,10 @@ export default function ConfigView({ actions, categories, items, setView }) {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
-        <div className="mx-auto flex w-full max-w-7xl items-center">
+        <div className="flex w-full items-center">
           <button
             onClick={() => setView("home")}
-            className="-ml-2 mr-3 rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
+            className="-ml-2 mr-3 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
           >
             <ChevronLeft size={24} />
           </button>
@@ -17,7 +17,9 @@ export default function ConfigView({ actions, categories, items, setView }) {
       <div className="flex-1 overflow-y-auto p-4 pb-24">
         <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
           {categories.map((category) => {
-            const categoryItems = items.filter((item) => item.categoryId === category.id);
+            const categoryItems = items
+              .filter((item) => item.categoryId === category.id)
+              .sort((first, second) => (first.order || 0) - (second.order || 0));
 
             return (
               <div
@@ -31,63 +33,92 @@ export default function ConfigView({ actions, categories, items, setView }) {
                   <div className="flex gap-1">
                     <button
                       onClick={() => actions.editCategory(category)}
-                      className="rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                      className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-indigo-600"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
                       onClick={() => actions.deleteCategory(category)}
-                      className="rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-red-500"
+                      className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-red-500"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {categoryItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-2xl border border-slate-100/50 bg-slate-50 p-2 pl-4"
-                    >
-                      <span className="mr-2 truncate font-medium text-slate-700">{item.name}</span>
-                      <div className="flex shrink-0 gap-1">
-                        <div className="mr-1 flex flex-col justify-center">
+                  {categoryItems.map((item, index) => {
+                    const isSeparator = item.type === "separator";
+                    const separatorLabel = item.name || "Separador";
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex items-center justify-between rounded-2xl border p-2 pl-4 ${
+                          isSeparator
+                            ? " border-slate-200  bg-slate-200"
+                            : "border-slate-100/50 bg-slate-50"
+                        }`}
+                      >
+                        <span
+                          className={`mr-2 truncate font-medium ${
+                            isSeparator ? "text-slate-500" : "text-slate-700"
+                          }`}
+                        >
+                          
+                          {isSeparator && (
+                            <div className="text-xs uppercase tracking-wide text-slate-400 ">
+                              SEPARADOR
+                            </div>
+                          )}
+                          {separatorLabel}
+                        </span>
+                        <div className="flex shrink-0 gap-1">
+                          <div className="mr-1 flex flex-col justify-center">
+                            <button
+                              onClick={() => actions.moveItem(item, "up")}
+                              disabled={index === 0}
+                              className="cursor-pointer text-slate-300 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-300"
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button
+                              onClick={() => actions.moveItem(item, "down")}
+                              disabled={index === categoryItems.length - 1}
+                              className="cursor-pointer text-slate-300 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-300"
+                            >
+                              <ChevronDown size={16} />
+                            </button>
+                          </div>
                           <button
-                            onClick={() => actions.moveItem(item, "up")}
-                            disabled={index === 0}
-                            className="text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-300"
+                            onClick={() => actions.editItem(item)}
+                            className="cursor-pointer p-2 text-slate-400 transition-colors hover:text-indigo-600"
                           >
-                            <ChevronUp size={16} />
+                            <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => actions.moveItem(item, "down")}
-                            disabled={index === categoryItems.length - 1}
-                            className="text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-300"
+                            onClick={() => actions.deleteItem(item)}
+                            className="cursor-pointer p-2 text-slate-400 transition-colors hover:text-red-500"
                           >
-                            <ChevronDown size={16} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
-                        <button
-                          onClick={() => actions.editItem(item)}
-                          className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => actions.deleteItem(item)}
-                          className="p-2 text-slate-400 transition-colors hover:text-red-500"
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </div>
-                    </div>
-                  ))}
-                  <button
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-indigo-600"
-                    onClick={() => actions.addItem(category.id)}
-                  >
-                    <Plus size={18} /> Anadir item
-                  </button>
+                    );
+                  })}
+                  <div className="grid gap-2">
+                    <button
+                      className="cursor-pointer mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-indigo-600"
+                      onClick={() => actions.addItem(category.id)}
+                    >
+                      <Plus size={18} /> Anadir item
+                    </button>
+                    <button
+                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200"
+                      onClick={() => actions.addSeparator(category.id)}
+                    >
+                      <Plus size={18} /> Añadir separador
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -95,7 +126,7 @@ export default function ConfigView({ actions, categories, items, setView }) {
         </div>
         <div className="mt-6 flex justify-center">
           <button
-            className="flex w-full max-w-sm items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 py-4 font-bold text-indigo-600 transition-all active:scale-95"
+            className="cursor-pointer flex w-full max-w-sm items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 py-4 font-bold text-indigo-600 transition-all active:scale-95"
             onClick={actions.addCategory}
           >
             <Plus size={20} /> Nueva categoria

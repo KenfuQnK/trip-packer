@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronUp } from "lucide-react";
 
-import { generateId } from "../utils/tripPackerData";
+import { generateId } from "../utils/constants";
 
 export default function TripEditView({
   actions,
@@ -46,10 +46,10 @@ export default function TripEditView({
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
+        <div className="flex w-full items-center justify-between">
           <button
             onClick={() => setView("home")}
-            className="-ml-2 rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
+            className="-ml-2 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
           >
             <ChevronLeft size={24} />
           </button>
@@ -59,7 +59,7 @@ export default function TripEditView({
           <div className="w-10" />
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-5 pb-24">
+      <div className="flex-1 overflow-y-auto p-5 pb-8">
         <div className="mb-8 max-w-xl">
           <label className="mb-2 ml-1 block text-sm font-bold text-slate-500">
             Nombre del viaje
@@ -78,16 +78,18 @@ export default function TripEditView({
           </label>
           <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
             {categories.map((category) => {
-              const categoryItems = items.filter((item) => item.categoryId === category.id);
+              const categoryItems = items
+                .filter((item) => item.categoryId === category.id)
+                .sort((first, second) => (first.order || 0) - (second.order || 0));
 
               if (categoryItems.length === 0) {
                 return null;
               }
 
               return (
-                <div key={category.id} className="mb-6 break-inside-avoid">
+                <div key={category.id} className={`mb-6 break-inside-avoid rounded-3xl border border-slate-100 bg-white p-5 shadow-sm ${category.color}`}>
                   <div
-                    className={`mb-3 inline-flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80 ${category.color}`}
+                    className={`w-full mb-3 inline-flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider xxx rounded-lg transition-opacity hover:opacity-80 ${category.color}`}
                     onClick={() => toggleCategory(category.id)}
                   >
                     {category.name}{" "}
@@ -96,6 +98,20 @@ export default function TripEditView({
                   {!collapsed[category.id] && (
                     <div className="animate-in slide-in-from-top-2 fade-in grid gap-2 duration-200">
                       {categoryItems.map((item) => {
+                        const isSeparator = item.type === "separator";
+                        const displayLabel = item.name || "Separador";
+
+                        if (isSeparator) {
+                          return (
+                            <div
+                              key={item.id}
+                              className=" px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                            >
+                              {displayLabel}:
+                            </div>
+                          );
+                        }
+
                         const isSelected = draft.selectedItems.includes(item.id);
 
                         return (
@@ -142,14 +158,16 @@ export default function TripEditView({
           </div>
         </div>
       </div>
-      <div className="fixed right-0 bottom-0 left-0 z-10 flex justify-center border-t border-slate-100 bg-white p-4">
-        <button
-          onClick={() => actions.saveTrip(draft)}
-          disabled={!draft.name.trim()}
-          className="w-full max-w-sm rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 disabled:opacity-50"
-        >
-          Guardar Viaje
-        </button>
+      <div className="sticky bottom-0 z-20 mt-auto px-5 pt-6 pb-5">
+        <div className="flex justify-center bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-8">
+          <button
+            onClick={() => actions.saveTrip(draft)}
+            disabled={!draft.name.trim()}
+            className="cursor-pointer w-full max-w-sm rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Guardar Viaje
+          </button>
+        </div>
       </div>
     </div>
   );

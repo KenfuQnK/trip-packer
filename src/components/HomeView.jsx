@@ -13,12 +13,12 @@ export default function HomeView({ setActiveTripId, setView, trips }) {
 
   return (
     <div className="flex h-full flex-col bg-slate-50">
-      <div className="relative z-10 rounded-b-3xl border-b border-slate-100 bg-white px-6 pt-12 pb-6 shadow-sm">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
+      <div className="relative z-10 rounded-b-3xl border-b border-slate-100 bg-white px-6 pt-12 pb-6 shadow-sm lg:hidden">
+        <div className="flex w-full items-center justify-between">
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Mis Viajes</h1>
           <button
             onClick={() => setView("config")}
-            className="rounded-full bg-slate-50 p-3 text-slate-600 transition-colors hover:bg-slate-100 hover:text-indigo-600"
+            className="cursor-pointer rounded-full bg-slate-50 p-3 text-slate-600 transition-colors hover:bg-slate-100 hover:text-indigo-600"
           >
             <Settings size={24} />
           </button>
@@ -66,7 +66,7 @@ export default function HomeView({ setActiveTripId, setView, trips }) {
       <div className="flex justify-center p-6 pt-0">
         <button
           onClick={createTrip}
-          className="flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 transition-all active:scale-95"
+          className="cursor-pointer flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 transition-all active:scale-95"
         >
           <Plus size={24} /> Nuevo Viaje
         </button>
