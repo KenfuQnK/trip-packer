@@ -46,17 +46,23 @@ export default function TripEditView({
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
-        <div className="flex w-full items-center justify-between">
+        <div className="flex w-full items-center justify-between gap-3">
           <button
             onClick={() => setView("home")}
             className="-ml-2 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
           >
             <ChevronLeft size={24} />
           </button>
-          <h2 className="text-xl font-extrabold text-slate-800">
+          <h2 className="min-w-0 flex-1 truncate text-center text-xl font-extrabold text-slate-800">
             {isNew ? "Nuevo Viaje" : "Editar Viaje"}
           </h2>
-          <div className="w-10" />
+          <button
+            onClick={() => actions.saveTrip(draft)}
+            disabled={!draft.name.trim()}
+            className="hidden cursor-pointer rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
+          >
+            Guardar viaje
+          </button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-5 pb-8">
@@ -87,9 +93,12 @@ export default function TripEditView({
               }
 
               return (
-                <div key={category.id} className={`mb-6 break-inside-avoid rounded-3xl border border-slate-100 bg-white p-5 shadow-sm ${category.color}`}>
+                <div
+                  key={category.id}
+                  className={`mb-6 break-inside-avoid overflow-hidden rounded-3xl border border-slate-100 p-4 shadow-sm ${category.color}`}
+                >
                   <div
-                    className={`w-full mb-3 inline-flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider xxx rounded-lg transition-opacity hover:opacity-80 ${category.color}`}
+                    className="mb-3 inline-flex w-full cursor-pointer select-none items-center gap-2 rounded-lg px-3 pb-1 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80"
                     onClick={() => toggleCategory(category.id)}
                   >
                     {category.name}{" "}
@@ -117,7 +126,7 @@ export default function TripEditView({
                         return (
                           <label
                             key={item.id}
-                            className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 shadow-sm transition-all ${
+                            className={`flex cursor-pointer items-center gap-4 rounded-xl border p-2 shadow-sm transition-all ${
                               isSelected
                                 ? "border-indigo-200 bg-indigo-50/50"
                                 : "border-slate-100 bg-white hover:border-indigo-100"
@@ -158,14 +167,14 @@ export default function TripEditView({
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 z-20 mt-auto px-5 pt-6 pb-5">
+      <div className="sticky bottom-0 z-20 mt-auto px-5 pt-6 pb-5 lg:hidden">
         <div className="flex justify-center bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-8">
           <button
             onClick={() => actions.saveTrip(draft)}
             disabled={!draft.name.trim()}
             className="cursor-pointer w-full max-w-sm rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Guardar Viaje
+            Guardar viaje
           </button>
         </div>
       </div>

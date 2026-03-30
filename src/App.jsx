@@ -54,8 +54,8 @@ function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
-      <div className="relative flex min-h-screen w-full overflow-hidden bg-white transition-all duration-300 lg:flex-row">
-        <aside className="hidden lg:flex lg:w-80 xl:w-96">
+      <div className="relative flex min-h-screen w-full bg-white transition-all duration-300 lg:flex-row">
+        <aside className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-80 lg:self-start lg:shrink-0 xl:w-96">
           <div className="flex h-full w-full flex-col border-r border-slate-100 bg-slate-950 px-8 py-8 text-white">
             <div className="space-y-3">
               <p className="text-xs font-bold uppercase tracking-[0.35em] text-slate-400">

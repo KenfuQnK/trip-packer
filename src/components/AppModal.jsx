@@ -47,7 +47,7 @@ export default function AppModal({ modal, setModal, closeModal }) {
                         }`}
                         aria-pressed={isSelected}
                       >
-                        <span>{option.label}</span>
+                        {/* <span>{option.label}</span> */}
                         <span className={`h-3 w-3 rounded-full ${option.swatch}`} />
                         {isSelected && <Check size={14} className="ml-1 shrink-0" />}
                       </button>

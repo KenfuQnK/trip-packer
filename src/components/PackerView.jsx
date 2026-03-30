@@ -19,6 +19,7 @@ export default function PackerView({
   const progress = trip.selectedItems.length
     ? Math.round((trip.packedItems.length / trip.selectedItems.length) * 100)
     : 0;
+  const selectedItemIds = new Set(trip.selectedItems);
 
   const toggleCategory = (categoryId) => {
     setCollapsed((current) => ({ ...current, [categoryId]: !current[categoryId] }));
@@ -70,7 +71,7 @@ export default function PackerView({
       <div className="flex-1 overflow-y-auto p-4 pb-12">
         {trip.selectedItems.length === 0 && (
           <div className="mt-12 text-center text-slate-400">
-            <p className="text-lg font-medium">No has seleccionado ningun item.</p>
+            <p className="text-lg font-medium">No has configurado ningún item.</p>
             <button
               onClick={() => setView("trip-edit")}
               className="cursor-pointer mt-4 font-bold text-indigo-600 hover:underline"
@@ -85,19 +86,21 @@ export default function PackerView({
               .filter((item) => item.categoryId === category.id)
               .sort((first, second) => (first.order || 0) - (second.order || 0));
 
-            const selectedItemIds = new Set(trip.selectedItems);
+            const hasSelectedItems = categoryItems.some(
+              (item) => item.type !== "separator" && selectedItemIds.has(item.id),
+            );
 
-            if (categoryItems.length === 0) {
+            if (!hasSelectedItems) {
               return null;
             }
 
             return (
               <div
                 key={category.id}
-                className={`animate-in slide-in-from-bottom-2 fade-in mb-6 break-inside-avoid duration-300 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm ${category.color}`}
+                className={`animate-in slide-in-from-bottom-2 fade-in mb-6 break-inside-avoid overflow-hidden rounded-2xl border border-slate-100 p-5 shadow-sm duration-300 ${category.color}`}
               >
                 <div
-                  className={`w-full mb-3 inline-flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80 ${category.color} bg-red-500`}
+                  className="mb-3 inline-flex w-full cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80"
                   onClick={() => toggleCategory(category.id)}
                 >
                   {category.name}{" "}
