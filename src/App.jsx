@@ -7,7 +7,7 @@ import PackerView from "./components/PackerView";
 import SyncStatus from "./components/SyncStatus";
 import TripEditView from "./components/TripEditView";
 import { useTripPackerApp } from "./utils/useTripPackerApp";
-import { Settings } from "lucide-react";
+import { Download, Settings } from "lucide-react";
 
 function App() {
   const {
@@ -101,6 +101,13 @@ function App() {
                 })}
               </div>
             </div>
+            <button
+              onClick={actions.exportJson}
+              className="mt-6 flex w-full cursor-pointer items-center justify-between rounded-2xl bg-emerald-500/12 px-4 py-3 text-left font-bold text-emerald-100 transition-colors hover:bg-emerald-500/20 hover:text-white"
+            >
+              <span>Exportar JSON</span>
+              <Download size={18} className="text-emerald-200" />
+            </button>
             <button
               onClick={() => setView("config")}
               className={`mt-8 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left font-bold transition-colors ${

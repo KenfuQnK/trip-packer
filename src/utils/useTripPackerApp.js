@@ -387,6 +387,27 @@ export function useTripPackerApp() {
         });
       });
     },
+    exportJson: () => {
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        categories,
+        items,
+        trips,
+      };
+      const fileName = `trip-packer-export-${new Date().toISOString().slice(0, 10)}.json`;
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
+      });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    },
   };
 
   return {
