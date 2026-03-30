@@ -1,6 +1,6 @@
 {
-  "name": "Trip packer",
-  "short_name": "Trip packer",
+  "name": "Trip Packer",
+  "short_name": "Trip Packer",
   "display": "standalone",
   "start_url": "./",
   "background_color": "#ffffff",
