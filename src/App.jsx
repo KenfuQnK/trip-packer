@@ -12,7 +12,7 @@ function App() {
   const {
     actions,
     activeTripId,
-    authError,
+    firebaseError,
     categories,
     closeModal,
     items,
@@ -24,30 +24,26 @@ function App() {
     syncErrorMsg,
     syncState,
     trips,
-    user,
     view,
   } = useTripPackerApp();
 
-  if (authError) {
+  if (firebaseError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-center font-sans">
         <div className="max-w-md rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm">
-          <h2 className="mb-2 text-xl font-bold text-red-600">Error de autenticacion</h2>
+          <h2 className="mb-2 text-xl font-bold text-red-600">Error de configuracion</h2>
           <p className="mb-4 text-sm font-medium text-slate-700">
-            {authError.code === "auth/configuration-not-found" ||
-            authError.code === "auth/operation-not-allowed"
-              ? "Debes habilitar la autenticacion anonima en Firebase Authentication."
-              : `Ha ocurrido un error al conectar con Firebase: ${authError.message}`}
+            {firebaseError.message}
           </p>
           <p className="rounded-xl bg-white p-2 font-mono text-xs text-slate-500">
-            {authError.code}
+            {firebaseError.code}
           </p>
         </div>
       </div>
     );
   }
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 text-xl font-bold text-slate-500">
         Cargando equipaje...
@@ -58,7 +54,7 @@ function App() {
   return (
     <div className="flex min-h-screen justify-center bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
       <div className="relative flex min-h-screen w-full max-w-7xl flex-col overflow-hidden bg-white shadow-2xl transition-all duration-300">
-        <SyncStatus syncErrorMsg={syncErrorMsg} syncState={syncState} user={user} />
+        <SyncStatus syncErrorMsg={syncErrorMsg} syncState={syncState} />
 
         {view === "home" && (
           <HomeView trips={trips} setView={setView} setActiveTripId={setActiveTripId} />

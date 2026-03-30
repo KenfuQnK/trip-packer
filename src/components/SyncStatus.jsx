@@ -1,11 +1,7 @@
 import { Cloud, CloudOff, Loader2 } from "lucide-react";
 
-import { appId, isCanvasEnvironment } from "../utils/firebase";
-
-export default function SyncStatus({ syncErrorMsg, syncState, user }) {
-  const dbPath = isCanvasEnvironment
-    ? `/artifacts/${appId}/users/${user.uid}/`
-    : `/users/${user.uid}/`;
+export default function SyncStatus({ syncErrorMsg, syncState }) {
+  const dbPath = "/(root collections)/";
 
   return (
     <div className="absolute top-4 right-4 z-50">

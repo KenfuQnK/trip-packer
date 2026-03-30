@@ -1,11 +1,5 @@
 import { initializeApp } from "firebase/app";
 import {
-  browserLocalPersistence,
-  getAuth,
-  inMemoryPersistence,
-  setPersistence,
-} from "firebase/auth";
-import {
   getFirestore,
   initializeFirestore,
   memoryLocalCache,
@@ -40,7 +34,6 @@ function hasFirebaseConfig(config) {
 export const isCanvasEnvironment = Boolean(runtimeConfig);
 export const firebaseConfig = runtimeConfig ?? envConfig;
 export const isFirebaseReady = hasFirebaseConfig(firebaseConfig);
-export const appId = globalThis.__app_id ?? firebaseConfig.projectId ?? "trip-packer";
 
 const app = isFirebaseReady ? initializeApp(firebaseConfig) : null;
 
@@ -64,20 +57,4 @@ if (app && !db) {
   db = getFirestore(app);
 }
 
-const auth = app ? getAuth(app) : null;
-
-async function configureAuthPersistence() {
-  if (!auth) {
-    return;
-  }
-
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch {
-    await setPersistence(auth, inMemoryPersistence);
-  }
-}
-
-const firebaseReadyPromise = configureAuthPersistence();
-
-export { app, auth, db, firebaseReadyPromise };
+export { app, db };

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import { signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
+import { useEffect, useState } from "react";
 import {
   collection,
   deleteDoc,
@@ -10,14 +9,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 
-import {
-  appId,
-  auth,
-  db,
-  firebaseReadyPromise,
-  isCanvasEnvironment,
-  isFirebaseReady,
-} from "./firebase";
+import { db, isFirebaseReady } from "./firebase";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_ITEMS,
@@ -42,12 +34,9 @@ function buildFirebaseError(message, code = "firebase/not-configured") {
 }
 
 export function useTripPackerApp() {
-  const [user, setUser] = useState(null);
-  const [authError, setAuthError] = useState(() =>
-    !isFirebaseReady || !auth
-      ? buildFirebaseError(
-          "Faltan variables de entorno de Firebase. Revisa tu archivo .env.local.",
-        )
+  const [firebaseError, setFirebaseError] = useState(() =>
+    !isFirebaseReady || !db
+      ? buildFirebaseError("Faltan variables de entorno de Firebase. Revisa tu archivo .env.local.")
       : null,
   );
   const [syncState, setSyncState] = useState("synced");
@@ -55,81 +44,32 @@ export function useTripPackerApp() {
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
   const [trips, setTrips] = useState([]);
-  const [loading, setLoading] = useState(isFirebaseReady && Boolean(auth));
+  const [loading, setLoading] = useState(Boolean(db));
   const [view, setView] = useState("home");
   const [activeTripId, setActiveTripId] = useState(null);
   const [modal, setModal] = useState(initialModalState);
+  const getCollectionRef = (collectionName) => collection(db, collectionName);
+  const getDocumentRef = (collectionName, id) => doc(db, collectionName, id);
 
   useEffect(() => {
-    if (!isFirebaseReady || !auth) {
+    if (!isFirebaseReady || !db) {
+      setFirebaseError(
+        buildFirebaseError("Faltan variables de entorno de Firebase. Revisa tu archivo .env.local."),
+      );
       return undefined;
     }
 
-    let isMounted = true;
-
-    const initAuth = async () => {
-      try {
-        await firebaseReadyPromise;
-
-        if (
-          isCanvasEnvironment &&
-          typeof globalThis.__initial_auth_token !== "undefined" &&
-          globalThis.__initial_auth_token
-        ) {
-          await signInWithCustomToken(auth, globalThis.__initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setAuthError(error);
-          setLoading(false);
-        }
-      }
-    };
-
-    initAuth();
-
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      if (!isMounted) {
-        return;
-      }
-
-      setUser(nextUser);
-
-      if (!nextUser) {
-        setLoading(true);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, []);
-
-  const getCollectionRef = useCallback((collectionName) => {
-    if (isCanvasEnvironment) {
-      return collection(db, "artifacts", appId, "users", user.uid, collectionName);
-    }
-
-    return collection(db, "users", user.uid, collectionName);
-  }, [user]);
-
-  const getDocumentRef = useCallback((collectionName, id) => {
-    if (isCanvasEnvironment) {
-      return doc(db, "artifacts", appId, "users", user.uid, collectionName, id);
-    }
-
-    return doc(db, "users", user.uid, collectionName, id);
-  }, [user]);
-
-  useEffect(() => {
-    if (!user || !db) {
-      return undefined;
-    }
+    setFirebaseError(null);
 
     let isFirstCategoryLoad = true;
+    let categoriesLoaded = false;
+    let itemsLoaded = false;
+    let tripsLoaded = false;
+    const markLoaded = () => {
+      if (categoriesLoaded && itemsLoaded && tripsLoaded) {
+        setLoading(false);
+      }
+    };
 
     const unsubscribeCategories = onSnapshot(
       getCollectionRef("categories"),
@@ -146,15 +86,19 @@ export function useTripPackerApp() {
           });
 
           await batch.commit();
+          return;
         }
 
         isFirstCategoryLoad = false;
         setCategories(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
+        categoriesLoaded = true;
+        markLoaded();
       },
       (error) => {
         console.error(error);
         setSyncState("error");
         setSyncErrorMsg("Error de lectura en Firestore. Revisa las reglas de seguridad.");
+        categoriesLoaded = true;
         setLoading(false);
       },
     );
@@ -167,11 +111,15 @@ export function useTripPackerApp() {
           .sort((first, second) => (first.order || 0) - (second.order || 0));
 
         setItems(sortedItems);
+        itemsLoaded = true;
+        markLoaded();
       },
       (error) => {
         console.error(error);
         setSyncState("error");
         setSyncErrorMsg("No se pudieron cargar los items.");
+        itemsLoaded = true;
+        setLoading(false);
       },
     );
 
@@ -179,12 +127,14 @@ export function useTripPackerApp() {
       getCollectionRef("trips"),
       (snapshot) => {
         setTrips(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
-        setLoading(false);
+        tripsLoaded = true;
+        markLoaded();
       },
       (error) => {
         console.error(error);
         setSyncState("error");
         setSyncErrorMsg("No se pudieron cargar los viajes.");
+        tripsLoaded = true;
         setLoading(false);
       },
     );
@@ -194,7 +144,7 @@ export function useTripPackerApp() {
       unsubscribeItems();
       unsubscribeTrips();
     };
-  }, [user, getCollectionRef, getDocumentRef]);
+  }, []);
 
   const openInputModal = (title, placeholder, initialValue, onConfirm) => {
     setModal({
@@ -397,7 +347,7 @@ export function useTripPackerApp() {
   return {
     actions,
     activeTripId,
-    authError,
+    firebaseError,
     categories,
     closeModal,
     items,
@@ -409,7 +359,6 @@ export function useTripPackerApp() {
     syncErrorMsg,
     syncState,
     trips,
-    user,
     view,
   };
 }
