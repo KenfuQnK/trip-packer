@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Edit2, GripVertical, Plus, Trash2 } from "lucide-react";
 
+import { getCategoryColorClasses } from "../utils/constants";
+
 const DESKTOP_BREAKPOINT = "(min-width: 1024px)";
 const LONG_PRESS_MS = 1000;
 const MOVE_TOLERANCE = 8;
@@ -38,7 +40,7 @@ function buildItemsByCategory(categories, items, activeDrag, dropTarget) {
   return groups;
 }
 
-export default function ConfigView({ actions, categories, items, setView }) {
+export default function ConfigView({ actions, categories, items, setView, theme }) {
   const [isWideScreen, setIsWideScreen] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(DESKTOP_BREAKPOINT).matches : false,
   );
@@ -56,6 +58,12 @@ export default function ConfigView({ actions, categories, items, setView }) {
   const categoriesRef = useRef(categories);
   const itemsByCategoryRef = useRef(null);
   const actionsRef = useRef(actions);
+
+  function clearPendingLongPressListeners() {
+    if (longPressRef.current?.cleanup) {
+      longPressRef.current.cleanup();
+    }
+  }
 
   const itemsByCategory = useMemo(
     () => buildItemsByCategory(categories, items, dragState, dropTarget),
@@ -94,6 +102,8 @@ export default function ConfigView({ actions, categories, items, setView }) {
     if (longPressRef.current?.timerId) {
       window.clearTimeout(longPressRef.current.timerId);
     }
+
+    clearPendingLongPressListeners();
 
     longPressRef.current = null;
     setLongPressItemId(null);
@@ -374,11 +384,51 @@ export default function ConfigView({ actions, categories, items, setView }) {
 
     cancelPendingLongPress();
 
+    const pointerId = event.pointerId;
+    const handleWindowPointerMove = (moveEvent) => {
+      if (moveEvent.pointerId !== pointerId || dragStateRef.current) {
+        return;
+      }
+
+      const pendingLongPress = longPressRef.current;
+
+      if (!pendingLongPress) {
+        return;
+      }
+
+      const movedX = moveEvent.clientX - pendingLongPress.startX;
+      const movedY = moveEvent.clientY - pendingLongPress.startY;
+      const distance = Math.hypot(movedX, movedY);
+
+      if (distance > MOVE_TOLERANCE) {
+        cancelPendingLongPress();
+      }
+    };
+    const handleWindowPointerEnd = (endEvent) => {
+      if (endEvent.pointerId !== pointerId || dragStateRef.current) {
+        return;
+      }
+
+      cancelPendingLongPress();
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerEnd);
+      window.removeEventListener("pointercancel", handleWindowPointerEnd);
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: true });
+    window.addEventListener("pointerup", handleWindowPointerEnd);
+    window.addEventListener("pointercancel", handleWindowPointerEnd);
+
     const nextState = {
       item,
+      pointerId,
       startX: event.clientX,
       startY: event.clientY,
+      cleanup,
       timerId: window.setTimeout(() => {
+        clearPendingLongPressListeners();
         startDrag(
           item,
           { x: nextState.startX, y: nextState.startY },
@@ -390,43 +440,22 @@ export default function ConfigView({ actions, categories, items, setView }) {
 
     longPressRef.current = nextState;
     setLongPressItemId(item.id);
-  }
-
-  function handleMobileLongPressMove(event) {
-    const pendingLongPress = longPressRef.current;
-
-    if (!pendingLongPress) {
-      return;
-    }
-
-    const movedX = event.clientX - pendingLongPress.startX;
-    const movedY = event.clientY - pendingLongPress.startY;
-    const distance = Math.hypot(movedX, movedY);
-
-    if (distance > MOVE_TOLERANCE) {
-      cancelPendingLongPress();
-    }
-  }
-
-  function handleMobileLongPressEnd() {
-    if (dragStateRef.current) {
-      return;
-    }
-
-    cancelPendingLongPress();
+    event.preventDefault();
   }
 
   return (
-    <div className="flex h-full flex-col bg-slate-50">
-      <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
+    <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-950">
+      <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <div className="flex w-full items-center">
           <button
             onClick={() => setView("home")}
-            className="-ml-2 mr-3 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
+            className="-ml-2 mr-3 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:text-slate-200"
           >
             <ChevronLeft size={24} />
           </button>
-          <h2 className="text-xl font-extrabold text-slate-800">Configuracion</h2>
+          <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">
+            Configuracion
+          </h2>
         </div>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pb-24">
@@ -438,28 +467,30 @@ export default function ConfigView({ actions, categories, items, setView }) {
             return (
               <div
                 key={category.id}
-                className={`mb-6 break-inside-avoid rounded-3xl border bg-white p-3 shadow-sm transition-all duration-200 ${
+                className={`mb-6 break-inside-avoid rounded-3xl border bg-white p-3 shadow-sm transition-all duration-200 dark:bg-slate-900 dark:shadow-none ${
                   isActiveDropCategory
-                    ? "border-indigo-200 shadow-lg shadow-indigo-100/70"
-                    : "border-slate-100"
+                    ? "border-indigo-200 shadow-lg shadow-indigo-100/70 dark:border-indigo-500/40 dark:shadow-indigo-950/40"
+                    : "border-slate-100 dark:border-slate-800"
                 }`}
               >
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className={`rounded-xl px-3 py-1.5 text-sm font-bold ${category.color}`}>
+                  <h3
+                    className={`rounded-xl px-3 py-1.5 text-sm font-bold ${getCategoryColorClasses(category.color, "chip", theme)}`}
+                  >
                     {category.name}
                   </h3>
                   <div className="flex gap-1">
                     <button
                       data-no-drag="true"
                       onClick={() => actions.editCategory(category)}
-                      className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                      className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:text-indigo-300"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
                       data-no-drag="true"
                       onClick={() => actions.deleteCategory(category)}
-                      className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-red-500"
+                      className="cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-red-500 dark:bg-slate-800 dark:text-slate-500 dark:hover:text-red-300"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -469,15 +500,15 @@ export default function ConfigView({ actions, categories, items, setView }) {
                 <div
                   ref={(node) => setCategoryListRef(category.id, node)}
                   className={`space-y-2 rounded-3xl transition-colors ${
-                    isActiveDropCategory ? "bg-indigo-50/60" : ""
+                    isActiveDropCategory ? "bg-indigo-50/60 dark:bg-indigo-500/10" : ""
                   }`}
                 >
                   {categoryItems.length === 0 && (
                     <div
                       className={`rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm font-medium transition-all ${
                         isActiveDropCategory
-                          ? "border-indigo-300 bg-indigo-50 text-indigo-600"
-                          : "border-slate-200 text-slate-400"
+                          ? "border-indigo-300 bg-indigo-50 text-indigo-600 dark:border-indigo-400/50 dark:bg-indigo-500/10 dark:text-indigo-200"
+                          : "border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500"
                       }`}
                     >
                       Suelta aqui para mover el item a esta categoria
@@ -489,9 +520,9 @@ export default function ConfigView({ actions, categories, items, setView }) {
                       return (
                         <div
                           key={`placeholder-${item.id}`}
-                          className="rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-100/80 px-4 py-4 shadow-sm transition-all duration-200"
+                          className="rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-100/80 px-4 py-4 shadow-sm transition-all duration-200 dark:border-indigo-400/50 dark:bg-indigo-500/10 dark:shadow-none"
                         >
-                          <div className="flex items-center gap-3 text-sm font-semibold text-indigo-700">
+                          <div className="flex items-center gap-3 text-sm font-semibold text-indigo-700 dark:text-indigo-200">
                             <GripVertical size={16} className="shrink-0 opacity-60" />
                             <span className="truncate">{item.name || "Separador"}</span>
                           </div>
@@ -508,23 +539,23 @@ export default function ConfigView({ actions, categories, items, setView }) {
                         key={item.id}
                         ref={(node) => setItemRef(item.id, node)}
                         onPointerDown={(event) => handleMobileLongPressStart(item, event)}
-                        onPointerMove={handleMobileLongPressMove}
-                        onPointerUp={handleMobileLongPressEnd}
-                        onPointerCancel={handleMobileLongPressEnd}
-                        onPointerLeave={handleMobileLongPressEnd}
+                        onContextMenu={(event) => event.preventDefault()}
+                        onDragStart={(event) => event.preventDefault()}
                         className={`flex items-center justify-between rounded-2xl border p-2 pl-4 transition-all duration-200 ${
                           isSeparator
-                            ? "border-slate-200 bg-slate-200"
-                            : "border-slate-100/50 bg-slate-50"
-                        } ${isLongPressArmed ? "scale-[0.99] shadow-md shadow-indigo-100" : ""}`}
+                            ? "border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-800"
+                            : "border-slate-100/50 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/70"
+                        } ${isLongPressArmed ? "scale-[0.99] shadow-md shadow-indigo-100 dark:shadow-indigo-950/50" : ""} select-none`}
+                        style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
                       >
                         <span
                           className={`mr-2 truncate font-medium ${
-                            isSeparator ? "text-slate-500" : "text-slate-700"
-                          }`}
+                            isSeparator ? "text-slate-500 dark:text-slate-400" : "text-slate-700 dark:text-slate-200"
+                          } select-none`}
+                          style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
                         >
                           {isSeparator && (
-                            <span className="block text-xs uppercase tracking-wide text-slate-400">
+                            <span className="block text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                               SEPARADOR
                             </span>
                           )}
@@ -535,21 +566,21 @@ export default function ConfigView({ actions, categories, items, setView }) {
                             type="button"
                             aria-label={`Mover ${label}`}
                             onPointerDown={(event) => handleDesktopHandlePointerDown(item, event)}
-                            className="hidden cursor-grab rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing lg:flex"
+                            className="hidden cursor-grab rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:flex"
                           >
                             <GripVertical size={18} />
                           </button>
                           <button
                             data-no-drag="true"
                             onClick={() => actions.editItem(item)}
-                            className="cursor-pointer p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                            className="cursor-pointer p-2 text-slate-400 transition-colors hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-300"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
                             data-no-drag="true"
                             onClick={() => actions.deleteItem(item)}
-                            className="cursor-pointer p-2 text-slate-400 transition-colors hover:text-red-500"
+                            className="cursor-pointer p-2 text-slate-400 transition-colors hover:text-red-500 dark:text-slate-500 dark:hover:text-red-300"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -561,14 +592,14 @@ export default function ConfigView({ actions, categories, items, setView }) {
                   <div className="grid gap-2 pt-1">
                     <button
                       data-no-drag="true"
-                      className="cursor-pointer mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-indigo-600"
+                      className="cursor-pointer mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300"
                       onClick={() => actions.addItem(category.id)}
                     >
                       <Plus size={18} /> Anadir item
                     </button>
                     <button
                       data-no-drag="true"
-                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200"
+                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                       onClick={() => actions.addSeparator(category.id)}
                     >
                       <Plus size={18} /> Anadir separador
@@ -581,7 +612,7 @@ export default function ConfigView({ actions, categories, items, setView }) {
         </div>
         <div className="mt-6 flex justify-center">
           <button
-            className="cursor-pointer flex w-full max-w-sm items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 py-4 font-bold text-indigo-600 transition-all active:scale-95"
+            className="cursor-pointer flex w-full max-w-sm items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 py-4 font-bold text-indigo-600 transition-all active:scale-95 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200"
             onClick={actions.addCategory}
           >
             <Plus size={20} /> Nueva categoria
@@ -598,21 +629,23 @@ export default function ConfigView({ actions, categories, items, setView }) {
             width: dragState.width,
           }}
         >
-          <div className="rotate-[1deg] scale-[1.02] rounded-2xl border border-indigo-200 bg-white/95 p-2 pl-4 shadow-2xl shadow-indigo-200/60 backdrop-blur-sm">
+          <div className="rotate-[1deg] scale-[1.02] rounded-2xl border border-indigo-200 bg-white/95 p-2 pl-4 shadow-2xl shadow-indigo-200/60 backdrop-blur-sm dark:border-indigo-400/30 dark:bg-slate-900/95 dark:shadow-indigo-950/50">
             <div className="flex items-center justify-between">
               <span
                 className={`mr-2 truncate font-medium ${
-                  dragState.item.type === "separator" ? "text-slate-500" : "text-slate-700"
+                  dragState.item.type === "separator"
+                    ? "text-slate-500 dark:text-slate-400"
+                    : "text-slate-700 dark:text-slate-200"
                 }`}
               >
                 {dragState.item.type === "separator" && (
-                  <span className="block text-xs uppercase tracking-wide text-slate-400">
+                  <span className="block text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     SEPARADOR
                   </span>
                 )}
                 {dragState.item.name || "Separador"}
               </span>
-              <GripVertical size={18} className="shrink-0 text-indigo-400" />
+              <GripVertical size={18} className="shrink-0 text-indigo-400 dark:text-indigo-300" />
             </div>
           </div>
         </div>

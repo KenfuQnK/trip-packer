@@ -16,6 +16,7 @@ import {
   DEFAULT_ITEMS,
   generateId,
   getRandomColor,
+  normalizeCategoryColor,
 } from "./constants";
 
 const initialModalState = {
@@ -37,11 +38,10 @@ function buildFirebaseError(message, code = "firebase/not-configured") {
 }
 
 export function useTripPackerApp() {
-  const [firebaseError, setFirebaseError] = useState(() =>
+  const firebaseError =
     !isFirebaseReady || !db
       ? buildFirebaseError("Faltan variables de entorno de Firebase. Revisa tu archivo .env.local.")
-      : null,
-  );
+      : null;
   const [syncState, setSyncState] = useState("synced");
   const [syncErrorMsg, setSyncErrorMsg] = useState("");
   const [categories, setCategories] = useState([]);
@@ -56,13 +56,8 @@ export function useTripPackerApp() {
 
   useEffect(() => {
     if (!isFirebaseReady || !db) {
-      setFirebaseError(
-        buildFirebaseError("Faltan variables de entorno de Firebase. Revisa tu archivo .env.local."),
-      );
       return undefined;
     }
-
-    setFirebaseError(null);
 
     let isFirstCategoryLoad = true;
     let categoriesLoaded = false;
@@ -93,7 +88,17 @@ export function useTripPackerApp() {
         }
 
         isFirstCategoryLoad = false;
-        setCategories(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
+        setCategories(
+          snapshot.docs.map((entry) => {
+            const data = entry.data();
+
+            return {
+              id: entry.id,
+              ...data,
+              color: normalizeCategoryColor(data.color),
+            };
+          }),
+        );
         categoriesLoaded = true;
         markLoaded();
       },

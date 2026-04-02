@@ -1,5 +1,8 @@
 import "./App.css";
 
+import { useEffect, useState } from "react";
+import { Download, Moon, Settings, Sun } from "lucide-react";
+
 import AppModal from "./components/AppModal";
 import ConfigView from "./components/ConfigView";
 import HomeView from "./components/HomeView";
@@ -7,9 +10,26 @@ import PackerView from "./components/PackerView";
 import SyncStatus from "./components/SyncStatus";
 import TripEditView from "./components/TripEditView";
 import { useTripPackerApp } from "./utils/useTripPackerApp";
-import { Download, Settings } from "lucide-react";
+
+const THEME_STORAGE_KEY = "trip-packer-theme";
+
+function getInitialTheme() {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+
+  if (storedTheme === "light" || storedTheme === "dark") {
+    return storedTheme;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
 
 function App() {
+  const [theme, setTheme] = useState(getInitialTheme);
+  const isDark = theme === "dark";
   const {
     actions,
     activeTripId,
@@ -28,15 +48,41 @@ function App() {
     view,
   } = useTripPackerApp();
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
+  };
+
   if (firebaseError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-center font-sans">
-        <div className="max-w-md rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm">
-          <h2 className="mb-2 text-xl font-bold text-red-600">Error de configuracion</h2>
-          <p className="mb-4 text-sm font-medium text-slate-700">
+      <div
+        className={`flex min-h-screen items-center justify-center p-6 text-center font-sans ${
+          isDark ? "bg-slate-950" : "bg-slate-100"
+        }`}
+      >
+        <div
+          className={`max-w-md rounded-3xl border p-6 shadow-sm ${
+            isDark
+              ? "border-red-500/30 bg-red-500/10"
+              : "border-red-200 bg-red-50"
+          }`}
+        >
+          <h2 className={`mb-2 text-xl font-bold ${isDark ? "text-red-300" : "text-red-600"}`}>
+            Error de configuracion
+          </h2>
+          <p className={`mb-4 text-sm font-medium ${isDark ? "text-slate-200" : "text-slate-700"}`}>
             {firebaseError.message}
           </p>
-          <p className="rounded-xl bg-white p-2 font-mono text-xs text-slate-500">
+          <p
+            className={`rounded-xl p-2 font-mono text-xs ${
+              isDark ? "bg-slate-900 text-slate-400" : "bg-white text-slate-500"
+            }`}
+          >
             {firebaseError.code}
           </p>
         </div>
@@ -46,17 +92,33 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 text-xl font-bold text-slate-500">
+      <div
+        className={`flex min-h-screen items-center justify-center text-xl font-bold ${
+          isDark ? "bg-slate-950 text-slate-400" : "bg-slate-100 text-slate-500"
+        }`}
+      >
         Cargando equipaje...
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
-      <div className="relative flex min-h-screen w-full bg-white transition-all duration-300 lg:flex-row">
+    <div
+      className={`flex min-h-screen font-sans selection:bg-indigo-100 ${
+        isDark ? "bg-slate-950 text-slate-100" : "bg-slate-100 text-slate-800"
+      }`}
+    >
+      <div
+        className={`relative flex min-h-screen w-full transition-all duration-300 lg:flex-row ${
+          isDark ? "bg-slate-950" : "bg-white"
+        }`}
+      >
         <aside className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-80 lg:self-start lg:shrink-0 xl:w-96">
-          <div className="flex h-full w-full flex-col border-r border-slate-100 bg-slate-950 px-8 py-8 text-white">
+          <div
+            className={`flex h-full w-full flex-col border-r px-8 py-8 text-white ${
+              isDark ? "border-slate-800 bg-slate-900" : "border-slate-100 bg-slate-950"
+            }`}
+          >
             <div className="space-y-3">
               <p className="text-xs font-bold uppercase tracking-[0.35em] text-slate-400">
                 Trip Packer
@@ -109,6 +171,17 @@ function App() {
               <Download size={18} className="text-emerald-200" />
             </button>
             <button
+              onClick={toggleTheme}
+              className="mt-3 flex w-full cursor-pointer items-center justify-between rounded-2xl bg-white/8 px-4 py-3 text-left font-bold text-white transition-colors hover:bg-white/14"
+            >
+              <span>{isDark ? "Activar light mode" : "Activar dark mode"}</span>
+              {isDark ? (
+                <Sun size={18} className="text-amber-300" />
+              ) : (
+                <Moon size={18} className="text-slate-300" />
+              )}
+            </button>
+            <button
               onClick={() => setView("config")}
               className={`mt-8 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left font-bold transition-colors ${
                 view === "config"
@@ -124,14 +197,43 @@ function App() {
             </button>
           </div>
         </aside>
-        <div className="relative flex min-h-screen w-full min-w-0 flex-1 flex-col overflow-hidden bg-white">
-          <SyncStatus syncErrorMsg={syncErrorMsg} syncState={syncState} />
+
+        <button
+          type="button"
+          aria-label={isDark ? "Activar light mode" : "Activar dark mode"}
+          onClick={toggleTheme}
+          className={`fixed top-4 right-4 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border shadow-lg transition-colors hover:text-indigo-600 lg:hidden ${
+            isDark
+              ? "border-slate-700 bg-slate-900 text-slate-200 shadow-slate-950/50"
+              : "border-slate-200 bg-white text-slate-700 shadow-slate-200/70"
+          }`}
+        >
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        <div
+          className={`relative flex min-h-screen w-full min-w-0 flex-1 flex-col overflow-hidden ${
+            isDark ? "bg-slate-950" : "bg-white"
+          }`}
+        >
+          <SyncStatus syncErrorMsg={syncErrorMsg} syncState={syncState} theme={theme} />
 
           {view === "home" && (
-            <HomeView trips={trips} setView={setView} setActiveTripId={setActiveTripId} />
+            <HomeView
+              trips={trips}
+              setView={setView}
+              setActiveTripId={setActiveTripId}
+              theme={theme}
+            />
           )}
           {view === "config" && (
-            <ConfigView categories={categories} items={items} setView={setView} actions={actions} />
+            <ConfigView
+              categories={categories}
+              items={items}
+              setView={setView}
+              actions={actions}
+              theme={theme}
+            />
           )}
           {view === "trip-edit" && (
             <TripEditView
@@ -141,6 +243,7 @@ function App() {
               items={items}
               setView={setView}
               actions={actions}
+              theme={theme}
             />
           )}
           {view === "packer" && (
@@ -151,10 +254,11 @@ function App() {
               items={items}
               setView={setView}
               actions={actions}
+              theme={theme}
             />
           )}
 
-          <AppModal modal={modal} setModal={setModal} closeModal={closeModal} />
+          <AppModal modal={modal} setModal={setModal} closeModal={closeModal} theme={theme} />
         </div>
       </div>
     </div>

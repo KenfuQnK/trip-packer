@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -6,6 +7,13 @@
   --mono: ui-monospace, Consolas, monospace;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   font-family: var(--sans);
+  background: #f1f5f9;
 }
