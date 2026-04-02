@@ -97,17 +97,17 @@ export default function PackerView({
             return (
               <div
                 key={category.id}
-                className={`animate-in slide-in-from-bottom-2 fade-in mb-6 break-inside-avoid overflow-hidden rounded-2xl border border-slate-100 p-5 shadow-sm duration-300 ${category.color}`}
+                className={`animate-in slide-in-from-bottom-2 fade-in mb-6 break-inside-avoid overflow-hidden rounded-2xl border border-slate-100 p-3 shadow-sm duration-300 ${category.color}`}
               >
                 <div
-                  className="mb-3 inline-flex w-full cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80"
+                  className="inline-flex w-full cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80"
                   onClick={() => toggleCategory(category.id)}
                 >
                   {category.name}{" "}
                   {collapsed[category.id] ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                 </div>
                 {!collapsed[category.id] && (
-                  <div className="space-y-2">
+                  <div className="mt-3 space-y-2">
                     {categoryItems.map((item, index) => {
                       const isSeparator = item.type === "separator";
                       const displayLabel = item.name || "Separador";

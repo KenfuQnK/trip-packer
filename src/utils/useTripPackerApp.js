@@ -329,28 +329,63 @@ export function useTripPackerApp() {
         });
       });
     },
-    moveItem: (item, direction) => {
+    reorderItem: (itemId, targetCategoryId, targetIndex) => {
       runWithSync(async () => {
-        const categoryItems = items.filter((entry) => entry.categoryId === item.categoryId);
-        const index = categoryItems.findIndex((entry) => entry.id === item.id);
+        const item = items.find((entry) => entry.id === itemId);
 
-        if (direction === "up" && index > 0) {
-          const previousItem = categoryItems[index - 1];
-          const batch = writeBatch(db);
-
-          batch.update(getDocumentRef("items", item.id), { order: previousItem.order });
-          batch.update(getDocumentRef("items", previousItem.id), { order: item.order });
-          await batch.commit();
+        if (!item) {
+          return;
         }
 
-        if (direction === "down" && index < categoryItems.length - 1) {
-          const nextItem = categoryItems[index + 1];
-          const batch = writeBatch(db);
+        const sourceItems = items
+          .filter((entry) => entry.categoryId === item.categoryId)
+          .sort((first, second) => (first.order || 0) - (second.order || 0));
+        const sourceIndex = sourceItems.findIndex((entry) => entry.id === item.id);
+        const sourceWithoutItem = sourceItems.filter((entry) => entry.id !== item.id);
+        const targetItemsBase =
+          item.categoryId === targetCategoryId
+            ? sourceWithoutItem
+            : items
+                .filter((entry) => entry.categoryId === targetCategoryId)
+                .sort((first, second) => (first.order || 0) - (second.order || 0));
+        const safeTargetIndex = Math.max(0, Math.min(targetIndex, targetItemsBase.length));
 
-          batch.update(getDocumentRef("items", item.id), { order: nextItem.order });
-          batch.update(getDocumentRef("items", nextItem.id), { order: item.order });
-          await batch.commit();
+        if (item.categoryId === targetCategoryId && safeTargetIndex === sourceIndex) {
+          return;
         }
+
+        const batch = writeBatch(db);
+        const nextTargetItems = [...targetItemsBase];
+
+        nextTargetItems.splice(safeTargetIndex, 0, {
+          ...item,
+          categoryId: targetCategoryId,
+        });
+
+        if (item.categoryId !== targetCategoryId) {
+          sourceWithoutItem.forEach((entry, index) => {
+            if (entry.order !== index + 1) {
+              batch.update(getDocumentRef("items", entry.id), { order: index + 1 });
+            }
+          });
+        }
+
+        nextTargetItems.forEach((entry, index) => {
+          const nextPayload = { order: index + 1 };
+
+          if (entry.id === item.id && entry.categoryId !== item.categoryId) {
+            nextPayload.categoryId = targetCategoryId;
+          }
+
+          if (
+            entry.order !== nextPayload.order ||
+            ("categoryId" in nextPayload && entry.categoryId !== nextPayload.categoryId)
+          ) {
+            batch.update(getDocumentRef("items", entry.id), nextPayload);
+          }
+        });
+
+        await batch.commit();
       });
     },
     saveTrip: (draftTrip) => {
@@ -360,8 +395,6 @@ export function useTripPackerApp() {
           selectedItems: draftTrip.selectedItems,
           packedItems: draftTrip.packedItems,
         });
-
-        setView("home");
       });
     },
     deleteTrip: (tripId) => {

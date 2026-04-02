@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronUp } from "lucide-react";
 
 import { generateId } from "../utils/constants";
@@ -20,6 +20,17 @@ export default function TripEditView({
     return { id: generateId(), name: "", selectedItems: [], packedItems: [] };
   });
   const [collapsed, setCollapsed] = useState({});
+  const isFirstRender = useRef(true);
+  const saveTrip = actions.saveTrip;
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    saveTrip(draft);
+  }, [draft]);
 
   const toggleCategory = (categoryId) => {
     setCollapsed((current) => ({ ...current, [categoryId]: !current[categoryId] }));
@@ -46,7 +57,7 @@ export default function TripEditView({
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
-        <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex w-full items-center gap-3">
           <button
             onClick={() => setView("home")}
             className="-ml-2 cursor-pointer rounded-full bg-slate-50 p-2 text-slate-400 transition-colors hover:text-slate-600"
@@ -56,13 +67,7 @@ export default function TripEditView({
           <h2 className="min-w-0 flex-1 truncate text-center text-xl font-extrabold text-slate-800">
             {isNew ? "Nuevo Viaje" : "Editar Viaje"}
           </h2>
-          <button
-            onClick={() => actions.saveTrip(draft)}
-            disabled={!draft.name.trim()}
-            className="hidden cursor-pointer rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
-          >
-            Guardar viaje
-          </button>
+          <div className="w-10" aria-hidden="true" />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-5 pb-8">
@@ -165,17 +170,6 @@ export default function TripEditView({
               );
             })}
           </div>
-        </div>
-      </div>
-      <div className="sticky bottom-0 z-20 mt-auto px-5 pt-6 pb-5 lg:hidden">
-        <div className="flex justify-center bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-8">
-          <button
-            onClick={() => actions.saveTrip(draft)}
-            disabled={!draft.name.trim()}
-            className="cursor-pointer w-full max-w-sm rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Guardar viaje
-          </button>
         </div>
       </div>
     </div>
