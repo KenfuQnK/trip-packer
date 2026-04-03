@@ -113,16 +113,18 @@ function App() {
       >
         <aside className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-80 lg:self-start lg:shrink-0 xl:w-96">
           <div
-            className={`flex h-full w-full flex-col border-r px-8 py-8 text-white ${
-              isDark ? "border-slate-800 bg-slate-900" : "border-slate-100 bg-slate-950"
+            className={`flex h-full w-full flex-col border-r px-8 py-8 ${
+              isDark ? "border-slate-800 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"
             }`}
           >
             <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-[0.35em] text-slate-400">
+              <p className={`text-xs font-bold uppercase tracking-[0.35em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                 Trip Packer
               </p>
-              <h1 className="text-4xl font-black tracking-tight text-white">Mis Viajes</h1>
-              <p className="max-w-xs text-sm leading-6 text-slate-300">
+              <h1 className={`text-4xl font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                Mis Viajes
+              </h1>
+              <p className={`max-w-xs text-sm leading-6 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                 Gestiona tus viajes, prepara la maleta y sincroniza cada cambio sin perder el foco.
               </p>
             </div>
@@ -131,9 +133,13 @@ function App() {
                 <button
                   onClick={() => setView("home")}
                   className={`cursor-pointer rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-colors ${
-                    view === "home"
-                      ? "bg-white/15 text-white"
-                      : "text-slate-300 hover:bg-white/10 hover:text-white"
+                    isDark
+                      ? view === "home"
+                        ? "bg-white/15 text-white"
+                        : "text-slate-300 hover:bg-white/10 hover:text-white"
+                      : view === "home"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   Inicio
@@ -150,9 +156,13 @@ function App() {
                         setView("packer");
                       }}
                       className={`cursor-pointer rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-colors ${
-                        isActiveTrip
-                          ? "bg-white/15 text-white"
-                          : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        isDark
+                          ? isActiveTrip
+                            ? "bg-white/15 text-white"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                          : isActiveTrip
+                            ? "bg-slate-900 text-white"
+                            : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                       }`}
                     >
                       <span className="block truncate">{trip.name}</span>
@@ -163,34 +173,46 @@ function App() {
             </div>
             <button
               onClick={actions.exportJson}
-              className="mt-6 flex w-full cursor-pointer items-center justify-between rounded-2xl bg-emerald-500/12 px-4 py-3 text-left font-bold text-emerald-100 transition-colors hover:bg-emerald-500/20 hover:text-white"
+              className={`mt-6 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left font-bold transition-colors ${
+                isDark
+                  ? "bg-emerald-500/12 text-emerald-100 hover:bg-emerald-500/20 hover:text-white"
+                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              }`}
             >
               <span>Exportar JSON</span>
-              <Download size={18} className="text-emerald-200" />
+              <Download size={18} className={isDark ? "text-emerald-200" : "text-emerald-600"} />
             </button>
             <button
               onClick={toggleTheme}
-              className="mt-3 flex w-full cursor-pointer items-center justify-between rounded-2xl bg-white/8 px-4 py-3 text-left font-bold text-white transition-colors hover:bg-white/14"
+              className={`mt-3 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left font-bold transition-colors ${
+                isDark
+                  ? "bg-white/8 text-white hover:bg-white/14"
+                  : "bg-slate-100 text-slate-800 hover:bg-slate-200"
+              }`}
             >
               <span>{isDark ? "Activar light mode" : "Activar dark mode"}</span>
               {isDark ? (
                 <Sun size={18} className="text-amber-300" />
               ) : (
-                <Moon size={18} className="text-slate-300" />
+                <Moon size={18} className="text-slate-600" />
               )}
             </button>
             <button
               onClick={() => setView("config")}
               className={`mt-8 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left font-bold transition-colors ${
-                view === "config"
-                  ? "bg-white text-slate-900"
-                  : "bg-white/8 text-white hover:bg-white/14"
+                isDark
+                  ? view === "config"
+                    ? "bg-white text-slate-900"
+                    : "bg-white/8 text-white hover:bg-white/14"
+                  : view === "config"
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-800 hover:bg-slate-200"
               }`}
             >
               <span>Configuracion</span>
               <Settings
                 size={18}
-                className={view === "config" ? "text-slate-500" : "text-slate-300"}
+                className={isDark ? (view === "config" ? "text-slate-500" : "text-slate-300") : "text-slate-500"}
               />
             </button>
           </div>
