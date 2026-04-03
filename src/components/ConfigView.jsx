@@ -41,6 +41,7 @@ function buildItemsByCategory(categories, items, activeDrag, dropTarget) {
 }
 
 export default function ConfigView({ actions, categories, items, setView, theme, toggleTheme }) {
+  const isDark = theme === "dark";
   const [isWideScreen, setIsWideScreen] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(DESKTOP_BREAKPOINT).matches : false,
   );
@@ -444,7 +445,7 @@ export default function ConfigView({ actions, categories, items, setView, theme,
   }
 
   return (
-    <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-950">
+    <div className={`flex h-full flex-col ${isDark ? "dark bg-slate-950" : "bg-white"}`}>
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <div className="flex w-full items-center">
           <button
