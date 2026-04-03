@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Edit2, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, Edit2, GripVertical, Moon, Plus, Sun, Trash2 } from "lucide-react";
 
 import { getCategoryColorClasses } from "../utils/constants";
 
@@ -40,7 +40,7 @@ function buildItemsByCategory(categories, items, activeDrag, dropTarget) {
   return groups;
 }
 
-export default function ConfigView({ actions, categories, items, setView, theme }) {
+export default function ConfigView({ actions, categories, items, setView, theme, toggleTheme }) {
   const [isWideScreen, setIsWideScreen] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(DESKTOP_BREAKPOINT).matches : false,
   );
@@ -457,6 +457,19 @@ export default function ConfigView({ actions, categories, items, setView, theme 
             Configuracion
           </h2>
         </div>
+      </div>
+      <div className="px-4 pt-4 lg:hidden">
+        <button
+          onClick={toggleTheme}
+          className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+        >
+          <span>{theme === "dark" ? "Activar light mode" : "Activar dark mode"}</span>
+          {theme === "dark" ? (
+            <Sun size={18} className="text-amber-300" />
+          ) : (
+            <Moon size={18} className="text-slate-500 dark:text-slate-300" />
+          )}
+        </button>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pb-24">
         <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
