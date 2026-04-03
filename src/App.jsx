@@ -7,7 +7,6 @@ import AppModal from "./components/AppModal";
 import ConfigView from "./components/ConfigView";
 import HomeView from "./components/HomeView";
 import PackerView from "./components/PackerView";
-import SyncStatus from "./components/SyncStatus";
 import TripEditView from "./components/TripEditView";
 import { useTripPackerApp } from "./utils/useTripPackerApp";
 
@@ -42,8 +41,6 @@ function App() {
     setActiveTripId,
     setModal,
     setView,
-    syncErrorMsg,
-    syncState,
     trips,
     view,
   } = useTripPackerApp();
@@ -198,26 +195,11 @@ function App() {
           </div>
         </aside>
 
-        <button
-          type="button"
-          aria-label={isDark ? "Activar light mode" : "Activar dark mode"}
-          onClick={toggleTheme}
-          className={`fixed top-4 right-4 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border shadow-lg transition-colors hover:text-indigo-600 lg:hidden ${
-            isDark
-              ? "border-slate-700 bg-slate-900 text-slate-200 shadow-slate-950/50"
-              : "border-slate-200 bg-white text-slate-700 shadow-slate-200/70"
-          }`}
-        >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
         <div
           className={`relative flex min-h-screen w-full min-w-0 flex-1 flex-col overflow-hidden ${
             isDark ? "bg-slate-950" : "bg-white"
           }`}
         >
-          <SyncStatus syncErrorMsg={syncErrorMsg} syncState={syncState} theme={theme} />
-
           {view === "home" && (
             <HomeView
               trips={trips}
@@ -233,6 +215,7 @@ function App() {
               setView={setView}
               actions={actions}
               theme={theme}
+              toggleTheme={toggleTheme}
             />
           )}
           {view === "trip-edit" && (
